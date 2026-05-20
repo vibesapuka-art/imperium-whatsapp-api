@@ -16,7 +16,7 @@ if "token" in params and params["token"] == API_TOKEN:
     numero = params.get("number", "").strip()
     mensagem = params.get("text", "").strip()
     
-    if numero and mensaje:
+    if numero and mensagem:
         try:
             # =========================================================================
             # INTEGRAÇÃO DIRETA COM SEU WHATSAPP (Substitua pela chamada da sua API se necessário)
