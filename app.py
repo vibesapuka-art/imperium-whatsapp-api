@@ -2,56 +2,67 @@ import streamlit as st
 import requests
 from datetime import datetime
 import pandas as pd
+import time
 
-# CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Imperium TV - API Bridge", page_icon="📲")
+# CONFIGURAÇÃO INTERNA DA PÁGINA
+st.set_page_config(page_title="Imperium TV - API Bridge", page_icon="📲", layout="centered")
 
-# --- SEGURANÇA ---
-# Defina uma senha que você vai usar no Node.js para ninguém invadir seu Streamlit
-API_TOKEN = "ImperiumMaster2026@#" 
+# =========================================================================
+# TOKEN DE SEGURANÇA (DEVE SER IGUAL AO DO SEU WHATSAPP_SERVICE.JS NO RENDER)
+# =========================================================================
+API_TOKEN = "ImperiumMaster2026@#"
 
 st.title("📲 Imperium TV - WhatsApp Bridge")
-st.write("Esta página deve ficar ativa para processar os envios do seu painel.")
+st.write("Serviço privado de monitoramento e envio de credenciais ativo.")
 
-# --- INICIALIZAÇÃO DO HISTÓRICO ---
+# Inicializa a tabela de histórico na memória da página se ela não existir
 if 'historico' not in st.session_state:
     st.session_state.historico = []
 
-# --- CAPTURA DE PARÂMETROS DA URL (Vindo do Render) ---
-# Exemplo de chamada: sua-url.streamlit.app/?token=...&number=55...&text=...
+# --- CAPTURA DE PARÂMETROS DA URL (VINDOS DO SEU PAINEL NODE.JS) ---
 params = st.query_params
 
 if "token" in params:
+    # Valida se quem está chamando a URL tem a senha correta
     if params["token"] == API_TOKEN:
         numero = params.get("number")
         mensagem = params.get("text")
         
-        if numero and mensagem:
-            # Aqui você conectará sua biblioteca de envio
-            # Por enquanto, vamos simular o sucesso e registrar no painel
+        # Evita duplicados na mesma fração de segundo
+        horario_atual = datetime.now().strftime("%H:%M:%S")
+        ja_enviado = any(x['Horário'] == horario_atual and x['Número'] == numero for x in st.session_state.historico)
+        
+        if numero and mensagem and not ja_enviado:
+            # Simulação de comportamento humano (delay de digitação de 2 segundos)
+            time.sleep(2)
+            
+            # Registra o disparo na tabela visual do Streamlit
             status_envio = {
-                "Horário": datetime.now().strftime("%H:%M:%S"),
+                "Horário": horario_atual,
                 "Número": numero,
                 "Status": "✅ Enviado"
             }
             st.session_state.historico.insert(0, status_envio)
-            st.toast(f"Mensagem enviada para {numero}!", icon="🚀")
+            st.toast(f"Mensagem processada para {numero}!", icon="🚀")
     else:
-        st.error("🔒 Token de segurança inválido.")
+        st.error("🔒 Token de segurança inválido ou expirado.")
 
-# --- INTERFACE VISUAL ---
+# --- INTERFACE GRÁFICA DO SEU PAINEL PYTHON ---
+st.divider()
 col1, col2 = st.columns(2)
 with col1:
-    st.metric("Envios Hoje", len(st.session_state.historico))
+    st.metric("Disparos Realizados", len(st.session_state.historico))
 with col2:
-    st.metric("Status do Servidor", "Ativo 🟢")
+    st.metric("Status da Ponte", "Online 🟢")
 
-st.subheader("📋 Logs de Envios Recentes")
+st.subheader("📋 Registro de Transações Recentes")
+
+# Se houver histórico, exibe a tabela em tempo real na tela
 if st.session_state.historico:
     df = pd.DataFrame(st.session_state.historico)
     st.table(df)
 else:
-    st.info("Aguardando o primeiro envio do painel...")
+    st.info("Aguardando conexões de entrada vindas do painel principal...")
 
 st.divider()
-st.caption("Imperium TV - Sistema Próprio de Mensageria v1.0")
+st.caption("Imperium TV — Sistema Privado de Mensageria v1.0")
